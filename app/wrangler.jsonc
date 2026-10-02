@@ -1,0 +1,41 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "nokor-pass",
+  "main": "./src/worker/index.ts",
+  "compatibility_date": "2025-09-01",
+  "compatibility_flags": ["nodejs_compat"],
+  // The built PWA is served by the edge; /api/* falls through to the Worker.
+  "assets": {
+    "binding": "ASSETS",
+    "not_found_handling": "single-page-application",
+    "run_worker_first": ["/api/*"]
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "nokor-pass",
+      // Replace with the id from `wrangler d1 create nokor-pass` before deploying.
+      "database_id": "00000000-0000-0000-0000-000000000000",
+      "migrations_dir": "migrations"
+    }
+  ],
+  // One relayer instance serialises the operator key's transactions (SPEC §9.4).
+  "durable_objects": {
+    "bindings": [{ "name": "RELAYER", "class_name": "Relayer" }]
+  },
+  "migrations": [{ "tag": "v1", "new_sqlite_classes": ["Relayer"] }],
+  // Release escrowed payments whose hold has passed.
+  "triggers": { "crons": ["* * * * *"] },
+  // Local development defaults: an anvil chain on 127.0.0.1:8545 with the
+  // contracts deployed by contracts/script/Deploy.s.sol. For Base Sepolia, set
+  // RPC_URL, CHAIN_ID=84532, EXPLORER_URL and CONTRACTS from
+  // contracts/deployments/84532.json (see README).
+  "vars": {
+    "RPC_URL": "http://127.0.0.1:8545",
+    "CHAIN_ID": "31337",
+    "EXPLORER_URL": "",
+    "CONTRACTS": "{}",
+    "DISPUTE_WINDOW_SECONDS": "300"
+  },
+  "observability": { "enabled": true }
+}

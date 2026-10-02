@@ -1,0 +1,19 @@
+{
+  "name": "cota-contracts",
+  "version": "1.0.0",
+  "description": "Nokor Pass contracts (Foundry)",
+  "directories": {
+    "test": "test"
+  },
+  "scripts": {
+    "test": "forge test",
+    "build": "forge build"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "Apache-2.0",
+  "dependencies": {
+    "@openzeppelin/contracts": "^5.4.0"
+  },
+  "private": true
+}

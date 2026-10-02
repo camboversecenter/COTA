@@ -1,0 +1,219 @@
+/* Nokor Pass — one column, made for a phone in bright sun.
+   Moat green carries the interface; lotus pink is kept for the pass itself;
+   the approval sheet is the one loud moment (SPEC §5.1). */
+
+:root {
+  --stone: #edf0ea;
+  --stone-2: #e1e6de;
+  --paper: #fbfcfa;
+  --ink: #13221e;
+  --ink-2: #4a5a55;
+  --moat: #0e4a3f;
+  --moat-2: #16634f;
+  --lotus: #c8416d;
+  --warn: #9a5b00;
+  --warn-bg: #fff2d6;
+  --danger: #b42318;
+  --ok: #1f7a4d;
+  --line: #cfd6cc;
+  --radius-lg: 22px;
+  --radius: 12px;
+  --font: "Kantumruy Pro", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  color-scheme: light;
+}
+
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body {
+  background: var(--stone);
+  color: var(--ink);
+  font-family: var(--font);
+  font-size: 16px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+#root { min-height: 100dvh; }
+.shell { max-width: 30rem; margin: 0 auto; padding: 16px 16px 96px; }
+
+h1, h2, h3 { line-height: 1.2; margin: 0; }
+h1 { font-size: 1.75rem; font-weight: 700; letter-spacing: -0.01em; }
+h2 { font-size: 1.25rem; font-weight: 650; }
+h3 { font-size: 1rem; font-weight: 650; }
+p { margin: 0; }
+.muted { color: var(--ink-2); }
+.small { font-size: 0.875rem; }
+.stack > * + * { margin-top: 12px; }
+.stack-lg > * + * { margin-top: 24px; }
+.row { display: flex; gap: 12px; align-items: center; }
+.row.spread { justify-content: space-between; }
+.grow { flex: 1; }
+.mono { font-variant-numeric: tabular-nums; }
+a { color: var(--moat); }
+
+/* ------------------------------------------------------------------ bars */
+
+.topbar { display: flex; align-items: center; justify-content: space-between; padding: 4px 0 20px; }
+.brand { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 1.125rem; color: var(--moat); text-decoration: none; }
+.brand svg { width: 28px; height: 28px; }
+
+.tabs {
+  position: fixed; left: 0; right: 0; bottom: 0;
+  display: flex; justify-content: center;
+  background: var(--paper); border-top: 1px solid var(--line);
+  padding: 6px 8px calc(6px + env(safe-area-inset-bottom));
+}
+.tabs-inner { display: flex; gap: 4px; width: 100%; max-width: 30rem; }
+.tab {
+  flex: 1; border: 0; background: none; font: inherit; font-size: 0.8125rem; color: var(--ink-2);
+  padding: 8px 4px; border-radius: 10px; cursor: pointer;
+}
+.tab[aria-current="page"] { color: var(--moat); background: var(--stone); font-weight: 650; }
+
+/* ------------------------------------------------------------------ surfaces */
+
+.panel { background: var(--paper); border-radius: var(--radius); padding: 16px; border: 1px solid var(--line); }
+.panel.flat { border: 0; }
+.list { list-style: none; padding: 0; margin: 0; }
+.list > li { padding: 12px 0; border-top: 1px solid var(--line); }
+.list > li:first-child { border-top: 0; padding-top: 0; }
+
+/* The pass: the only place lotus appears. */
+.pass {
+  position: relative; overflow: hidden;
+  border-radius: var(--radius-lg); padding: 20px;
+  background: var(--moat); color: #f2f6f2;
+}
+.pass::after {
+  content: ""; position: absolute; right: -40px; top: -40px; width: 160px; height: 160px;
+  border-radius: 50%; background: var(--lotus); opacity: 0.9;
+}
+.pass > * { position: relative; z-index: 1; padding-right: 30%; }
+.pass .label { color: #b9d2c8; font-size: 0.875rem; }
+.pass .big { font-size: 1.5rem; font-weight: 700; }
+.pass.none { background: var(--paper); color: var(--ink); border: 1.5px dashed var(--moat-2); }
+.pass.none::after { display: none; }
+.pass.none .label { color: var(--ink-2); }
+
+.balances { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.balance { background: var(--paper); border: 1px solid var(--line); border-radius: var(--radius); padding: 14px 16px; }
+.balance .amount { font-size: 1.375rem; font-weight: 700; }
+
+/* The code a holder shows to be paid or admitted (SPEC §9.1). */
+.paycode {
+  text-align: center; background: var(--paper); border-radius: var(--radius-lg);
+  border: 1px solid var(--line); padding: 20px 16px;
+}
+.paycode .code {
+  font-size: 2.75rem; font-weight: 700; letter-spacing: 0.18em; color: var(--moat);
+  font-variant-numeric: tabular-nums; margin: 4px 0 6px;
+}
+.meter { height: 4px; background: var(--stone-2); border-radius: 2px; overflow: hidden; }
+.meter > i { display: block; height: 100%; background: var(--moat-2); transition: width 1s linear; }
+
+/* ------------------------------------------------------------------ approval sheet */
+
+.sheet-backdrop {
+  position: fixed; inset: 0; background: rgba(9, 24, 20, 0.55);
+  display: flex; align-items: flex-end; justify-content: center; z-index: 20;
+}
+.sheet {
+  width: 100%; max-width: 30rem; background: var(--paper);
+  border-radius: 24px 24px 0 0; padding: 24px 20px calc(20px + env(safe-area-inset-bottom));
+  animation: rise 220ms ease-out;
+}
+@keyframes rise { from { transform: translateY(24px); opacity: 0; } to { transform: none; opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .sheet { animation: none; } .meter > i { transition: none; } }
+
+.payee { font-size: 1.25rem; font-weight: 650; }
+.charge { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; margin: 18px 0 6px; }
+.charge .figure { font-size: 3.25rem; font-weight: 700; line-height: 1; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; }
+.charge .iso {
+  font-size: 1.375rem; font-weight: 700; padding: 2px 10px; border-radius: 8px;
+  border: 2px solid var(--ink); line-height: 1.3;
+}
+.charge .iso.khr { background: var(--ink); color: var(--paper); }
+.notice { border-radius: var(--radius); padding: 12px 14px; font-size: 0.9375rem; }
+.notice.warn { background: var(--warn-bg); color: var(--warn); }
+.notice.error { background: #fde7e5; color: var(--danger); }
+.notice.ok { background: #e2f3ea; color: var(--ok); }
+.notice.info { background: var(--stone); color: var(--ink-2); }
+
+/* ------------------------------------------------------------------ controls */
+
+label.field { display: block; }
+label.field > span { display: block; font-size: 0.875rem; color: var(--ink-2); margin-bottom: 6px; }
+input, select, textarea {
+  width: 100%; font: inherit; color: var(--ink); background: var(--paper);
+  border: 1.5px solid var(--line); border-radius: 10px; padding: 12px 14px;
+}
+input:focus, select:focus, textarea:focus { outline: none; border-color: var(--moat-2); box-shadow: 0 0 0 3px rgba(22, 99, 79, 0.18); }
+input.code-input { font-size: 1.75rem; letter-spacing: 0.2em; text-transform: uppercase; text-align: center; font-weight: 700; }
+
+button.btn {
+  font: inherit; font-weight: 650; border-radius: 12px; padding: 13px 18px; cursor: pointer;
+  border: 1.5px solid transparent; background: var(--moat); color: #fff; width: 100%;
+}
+button.btn:hover { background: var(--moat-2); }
+button.btn.secondary { background: var(--paper); color: var(--moat); border-color: var(--line); }
+button.btn.secondary:hover { background: var(--stone); }
+button.btn.danger { background: var(--paper); color: var(--danger); border-color: #f1c4bf; }
+button.btn.inline { width: auto; padding: 8px 14px; font-size: 0.9375rem; }
+button.btn:disabled { opacity: 0.55; cursor: progress; }
+button:focus-visible, a:focus-visible, .tab:focus-visible { outline: 3px solid var(--lotus); outline-offset: 2px; }
+.btn-row { display: flex; gap: 10px; }
+.btn-row > * { flex: 1; }
+
+.segmented { display: flex; background: var(--stone-2); border-radius: 10px; padding: 3px; }
+.segmented button {
+  flex: 1; border: 0; background: none; font: inherit; padding: 8px; border-radius: 8px; cursor: pointer; color: var(--ink-2);
+}
+.segmented button[aria-pressed="true"] { background: var(--paper); color: var(--ink); font-weight: 650; }
+
+.status { display: inline-block; font-size: 0.8125rem; padding: 2px 8px; border-radius: 6px; background: var(--stone); color: var(--ink-2); }
+.status.Escrowed { background: #e7eef9; color: #1d4f91; }
+.status.Disputed { background: var(--warn-bg); color: var(--warn); }
+.status.Released { background: #e2f3ea; color: var(--ok); }
+.status.Refunded { background: #f1ebf7; color: #5b3a8a; }
+
+/* ------------------------------------------------------------------ home */
+
+.home-hero { padding: 24px 0 8px; }
+.home-hero h1 { font-size: 2.25rem; }
+.roles { display: grid; gap: 10px; }
+.role {
+  display: block; text-decoration: none; color: inherit; background: var(--paper);
+  border: 1px solid var(--line); border-radius: var(--radius); padding: 14px 16px;
+}
+.role:hover { border-color: var(--moat-2); }
+.role strong { display: block; color: var(--moat); }
+
+/* ------------------------------------------------------------------ dashboard */
+
+.kpis { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.kpi { background: var(--paper); border: 1px solid var(--line); border-radius: var(--radius); padding: 14px 16px; }
+.kpi .v { font-size: 1.75rem; font-weight: 700; color: var(--moat); }
+table.data { width: 100%; border-collapse: collapse; font-size: 0.9375rem; }
+table.data th { text-align: left; font-weight: 600; color: var(--ink-2); padding: 6px 4px; border-bottom: 1px solid var(--line); }
+table.data td { padding: 8px 4px; border-bottom: 1px solid var(--line); }
+table.data td.num, table.data th.num { text-align: right; font-variant-numeric: tabular-nums; }
+.bar { height: 8px; background: var(--moat-2); border-radius: 4px; }
+
+.mnemonic { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; font-size: 0.9375rem; }
+.mnemonic span { background: var(--stone); border-radius: 8px; padding: 6px 8px; }
+.break { word-break: break-all; }
+
+/* ------------------------------------------------------------------ staff */
+
+.shell.wide { max-width: 44rem; }
+.segmented.wrap { flex-wrap: wrap; }
+.segmented.wrap button { flex: 1 0 auto; }
+.row > .field { flex: 1; }
+fieldset { border: 0; padding: 0; margin: 0; }
+.gate-result .big { font-size: 1.75rem; font-weight: 700; }
+.gate-result.approved { border-color: var(--ok); background: #e2f3ea; }
+.gate-result.approved .big { color: var(--ok); }
+.gate-result.failed, .gate-result.declined, .gate-result.expired { border-color: var(--danger, #a3262e); background: #fbeaea; }
+.kpi .note { font-size: 0.8125rem; color: var(--ink-2); }
+@media (min-width: 40rem) { .kpis { grid-template-columns: repeat(3, 1fr); } }
+.kpi .v.empty { font-size: 1.125rem; font-weight: 600; color: var(--ink-2); padding: 8px 0 6px; }

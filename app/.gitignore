@@ -1,0 +1,7 @@
+node_modules
+dist
+.wrangler
+.dev.vars
+*.log
+e2e/screenshots
+e2e/logs

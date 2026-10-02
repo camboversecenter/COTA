@@ -1,0 +1,45 @@
+{
+  "name": "nokor-pass",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Nokor Pass reference implementation: visitor wallet, merchant, gate, immigration and operator apps on Cloudflare Workers + D1, with contracts on Base.",
+  "license": "Apache-2.0",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "preview": "vite preview",
+    "deploy": "npm run build && wrangler deploy",
+    "typecheck": "tsc -b",
+    "test": "vitest run",
+    "abi": "node scripts/extract-abi.mjs",
+    "db:migrate:local": "wrangler d1 migrations apply DB --local",
+    "db:migrate:remote": "wrangler d1 migrations apply DB --remote",
+    "cf-typegen": "wrangler types",
+    "e2e": "bash e2e/run-local.sh"
+  },
+  "dependencies": {
+    "@noble/curves": "^2.4.0",
+    "@noble/hashes": "^2.4.0",
+    "@scure/bip32": "^2.4.0",
+    "@scure/bip39": "^2.4.0",
+    "hash-wasm": "^4.12.0",
+    "hono": "^4.13.12",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "viem": "^2.57.2"
+  },
+  "devDependencies": {
+    "@cloudflare/vite-plugin": "^1.62.4",
+    "@cloudflare/workers-types": "^5.20261002.1",
+    "@types/node": "^26.6.4",
+    "@types/react": "^18.3.31",
+    "@types/react-dom": "^18.3.7",
+    "@vitejs/plugin-react": "^4.7.0",
+    "playwright": "^1.63.0",
+    "typescript": "^5.9.3",
+    "vite": "^6.4.3",
+    "vitest": "^2.1.9",
+    "wrangler": "^4.146.0"
+  }
+}

@@ -1,0 +1,10 @@
+{
+  "name": "Nokor Pass",
+  "short_name": "Nokor Pass",
+  "description": "One pass to pay, enter heritage sites and carry Nokor Points across Cambodia.",
+  "start_url": "/#/wallet",
+  "display": "standalone",
+  "background_color": "#edf0ea",
+  "theme_color": "#0e4a3f",
+  "icons": [{ "src": "/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }]
+}
