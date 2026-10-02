@@ -15,7 +15,7 @@
       "binding": "DB",
       "database_name": "nokor-pass",
       // Replace with the id from `wrangler d1 create nokor-pass` before deploying.
-      "database_id": ""85a665f6-b6c5-41ac-8f63-db2035a4a25b",
+      "database_id": "85a665f6-b6c5-41ac-8f63-db2035a4a25b",
       "migrations_dir": "migrations"
     }
   ],
