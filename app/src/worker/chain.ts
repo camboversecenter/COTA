@@ -123,9 +123,10 @@ export class Relayer extends DurableObject<Env> {
       args,
     });
     const hash = await wallet.writeContract(request);
-    const receipt = await pub.waitForTransactionReceipt({ hash });
+    const receipt = await pub.waitForTransactionReceipt({ hash, retryCount: 10, pollingInterval: 3000 });
     if (receipt.status !== "success") throw new Error(`Transaction reverted: ${hash}`);
-    const block = await pub.getBlock({ blockNumber: receipt.blockNumber });
+    // Use blockHash (direct lookup) rather than blockNumber — the RPC may not yet index the block by number.
+    const block = await pub.getBlock({ blockHash: receipt.blockHash });
 
     const byAddress = new Map(
       Object.entries(chainConfig(env).contracts).map(([k, v]) => [v.toLowerCase(), k as ContractName]),
