@@ -8,6 +8,7 @@ import { staffApi, staffKey } from "./api";
 import { Field, fmtDate, Notice, TopBar, useAction, usePoll } from "./ui";
 
 type Role = "issuer" | "gate" | "operator";
+type StaffRole = Role;
 interface Staff {
   role: Role;
   label: string;
@@ -130,7 +131,9 @@ function IssuerDesk() {
           validDays: Number(days),
         });
         setResult(
-          `Pass #${r.passId} issued.${r.returning ? ` Returning visitor: previous pass #${r.previousPassId} was closed and linked.` : " First visit."}`,
+          `Pass #${r.passId} issued.${
+            r.returning ? ` Returning visitor: previous pass #${r.previousPassId} was closed and linked.` : " First visit."
+          }`,
         );
       } else {
         const r = await staffApi.post<{ passId: number }>("/issuer/close", { code });
@@ -271,7 +274,7 @@ export function Operator() {
   return <StaffGate role="operator">{() => <OperatorDesk />}</StaffGate>;
 }
 
-type OpTab = "topup" | "merchants" | "products" | "fares" | "disputes" | "settings";
+type OpTab = "topup" | "merchants" | "products" | "fares" | "disputes" | "settings" | "keys";
 
 function OperatorDesk() {
   const [tab, setTab] = useState<OpTab>("topup");
@@ -282,6 +285,7 @@ function OperatorDesk() {
     ["fares", "Fares"],
     ["disputes", "Disputes"],
     ["settings", "Settings"],
+    ["keys", "Staff keys"],
   ];
   return (
     <div className="stack-lg">
@@ -298,6 +302,7 @@ function OperatorDesk() {
       {tab === "fares" && <Fares />}
       {tab === "disputes" && <Disputes />}
       {tab === "settings" && <Settings />}
+      {tab === "keys" && <StaffKeys />}
     </div>
   );
 }
@@ -510,7 +515,7 @@ function Products() {
         }}
       >
         <h2>New site access product</h2>
-        {merchants.length === 0 && <Notice kind="warn">Register the site authority as a merchant with category “site” first.</Notice>}
+        {merchants.length === 0 && <Notice kind="warn">Register the site authority as a merchant with category "site" first.</Notice>}
         <Field label="Name (up to 31 characters)">
           <input value={name} onChange={(e) => setName(e.target.value)} maxLength={31} placeholder="Angkor 1-day pass" />
         </Field>
@@ -705,6 +710,70 @@ function Disputes() {
         Release all payments whose hold has passed
       </button>
     </div>
+  );
+}
+
+function StaffKeys() {
+  const [bootstrap, setBootstrap] = useState("");
+  const [role, setRole] = useState<StaffRole>("issuer");
+  const [label, setLabel] = useState("");
+  const [siteIds, setSiteIds] = useState("");
+  const [created, setCreated] = useState<string | null>(null);
+  const { busy, error, run } = useAction();
+
+  const submit = (e: React.FormEvent) => {
+    e.preventDefault();
+    setCreated(null);
+    void run(async () => {
+      const body: Record<string, unknown> = { role, label: label.trim() };
+      if (role === "gate" && siteIds.trim()) {
+        body.siteIds = siteIds.split(",").map((s) => s.trim()).filter(Boolean);
+      }
+      const res = await fetch("/api/admin/keys", {
+        method: "POST",
+        headers: { "content-type": "application/json", "x-bootstrap": bootstrap },
+        body: JSON.stringify(body),
+      });
+      if (!res.ok) throw new Error((await res.json<{ error: string }>()).error ?? `HTTP ${res.status}`);
+      const { key } = await res.json<{ key: string }>();
+      setCreated(key);
+      setLabel("");
+    });
+  };
+
+  return (
+    <form className="panel stack" onSubmit={submit}>
+      <h2>Create staff key</h2>
+      <p className="muted small">Requires the bootstrap secret set in Cloudflare. Each key is shown once — copy it before leaving this page.</p>
+      <Field label="Bootstrap secret">
+        <input type="password" value={bootstrap} onChange={(e) => setBootstrap(e.target.value)} autoComplete="off" />
+      </Field>
+      <Field label="Role">
+        <select value={role} onChange={(e) => setRole(e.target.value as StaffRole)}>
+          <option value="issuer">Issuer — immigration desk</option>
+          <option value="gate">Gate — site checkpoint</option>
+          <option value="operator">Operator — system admin</option>
+        </select>
+      </Field>
+      <Field label="Label (desk or device name)">
+        <input value={label} onChange={(e) => setLabel(e.target.value)} placeholder="Arrivals desk 1" />
+      </Field>
+      {role === "gate" && (
+        <Field label="Site IDs (comma-separated, leave blank for all)">
+          <input value={siteIds} onChange={(e) => setSiteIds(e.target.value)} placeholder="angkor-wat, bayon" />
+        </Field>
+      )}
+      <Notice kind="error">{error}</Notice>
+      {created && (
+        <div className="panel stack">
+          <p className="small muted">Key created — copy it now, it will not be shown again:</p>
+          <p className="mono break">{created}</p>
+        </div>
+      )}
+      <button className="btn" disabled={busy || !bootstrap || !label.trim()}>
+        {busy ? "Creating…" : "Create key"}
+      </button>
+    </form>
   );
 }
 
