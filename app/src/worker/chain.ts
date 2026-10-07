@@ -127,7 +127,9 @@ export class Relayer extends DurableObject<Env> {
     if (receipt.status !== "success") throw new Error(`Transaction reverted: ${hash}`);
 
     const byAddress = new Map(
-      Object.entries(chainConfig(env).contracts).map(([k, v]) => [v.toLowerCase(), k as ContractName]),
+      Object.entries(chainConfig(env).contracts)
+        .filter((entry): entry is [string, `0x${string}`] => typeof entry[1] === "string")
+        .map(([k, v]) => [v.toLowerCase(), k as ContractName]),
     );
     const logs = parseEventLogs({ abi: ALL_ABIS, logs: receipt.logs, strict: false });
     return {

@@ -34,8 +34,9 @@
     "RPC_URL": "https://sepolia.base.org",
     "CHAIN_ID": "84532",
     "EXPLORER_URL": "https://sepolia.basescan.org",
-    "CONTRACTS": "{\n  \"chainId\": 84532,\n  \"NokorAccess\": \"0xd828882ae9e821d5908674100310BA83FF4E5F66\",\n  \"NokorPass\": \"0xaCB11053B3B74E060765Cb09d10f86DaF0Dc69dA\",\n  \"NokorPoint\": \"0xCB6D0e77618027348A9a3781DD0e91896B92eAC0\",\n  \"NokorRegistry\": \"0x311C8FCacbD18F3Db5f451AfbD955b7A7eB9C43C\",\n  \"kRIEL\": \"0x421528cE814D59Ed9Eae825bE7B5758A62A6bDF2\",\n  \"kUSD\": \"0x7b1864aaCD65a7eC834177818b05A5c2f0AAad1c\"\n}",
+    "CONTRACTS": "{\n  \"NokorAccess\": \"0xd828882ae9e821d5908674100310BA83FF4E5F66\",\n  \"NokorPass\": \"0xaCB11053B3B74E060765Cb09d10f86DaF0Dc69dA\",\n  \"NokorPoint\": \"0xCB6D0e77618027348A9a3781DD0e91896B92eAC0\",\n  \"NokorRegistry\": \"0x311C8FCacbD18F3Db5f451AfbD955b7A7eB9C43C\",\n  \"kRIEL\": \"0x421528cE814D59Ed9Eae825bE7B5758A62A6bDF2\",\n  \"kUSD\": \"0x7b1864aaCD65a7eC834177818b05A5c2f0AAad1c\"\n}",
     "DISPUTE_WINDOW_SECONDS": "86400"
   },
-  "observability": { "enabled": true }
+  "observability": { "enabled": true },
+  "previews": {}
 }

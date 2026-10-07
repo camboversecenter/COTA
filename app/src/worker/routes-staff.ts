@@ -157,13 +157,21 @@ staff.post("/operator/merchants", requireStaff("operator"), async (c) => {
   if (!b.name?.trim()) throw bad("Merchant name is required.");
   return c.json(
     await wrap(async () => {
-      const res = await relay(c.env, "NokorRegistry", "register", [address, ascii32(b.category), ascii32(b.province), rc]);
+      let txHash: string | null = null;
+      try {
+        const res = await relay(c.env, "NokorRegistry", "register", [address, ascii32(b.category), ascii32(b.province), rc]);
+        txHash = res.hash;
+      } catch (e) {
+        // If already registered on-chain, still sync the D1 record.
+        if (!(e instanceof Error && e.message.includes("AlreadyRegistered"))) throw e;
+      }
+      // INSERT OR IGNORE so re-running after a partial failure is safe.
       await c.env.DB.prepare(
-        "INSERT INTO merchants (address, name, category, province, risk_class, created_at) VALUES (?1, ?2, ?3, ?4, ?5, ?6)",
+        "INSERT OR IGNORE INTO merchants (address, name, category, province, risk_class, created_at) VALUES (?1, ?2, ?3, ?4, ?5, ?6)",
       )
-        .bind(address, b.name.trim(), b.category, b.province, rc, res.blockTimestamp)
+        .bind(address, b.name.trim(), b.category, b.province, rc, Math.floor(Date.now() / 1000))
         .run();
-      return { address, txHash: res.hash };
+      return { address, txHash };
     }),
   );
 });

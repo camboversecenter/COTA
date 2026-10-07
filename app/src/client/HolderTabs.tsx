@@ -321,22 +321,29 @@ export function SitesTab({ me }: Props) {
       <Notice kind="info">{msg}</Notice>
       {!me.pass?.valid && <Notice kind="warn">You need a valid pass to buy site access.</Notice>}
       {products.length === 0 && <p className="muted">No site access is on sale yet.</p>}
-      {products.map((p) => (
-        <section key={p.product_id} className="panel stack">
-          <div className="row spread">
-            <h3>{p.name}</h3>
-            <span className="mono">{formatAmount(cur === "USD" ? p.price_usd : p.price_khr, cur)}</span>
-          </div>
-          <p className="muted small">
-            {p.sites.map((s) => SITES[s]?.name ?? s).join(", ")}. {fmtDuration(p.validity_seconds)},{" "}
-            {p.entries >= 0xffffffff ? "unlimited entries" : `${p.entries} ${p.entries === 1 ? "entry" : "entries"}`}.
-          </p>
-          {p.description && <p className="small">{p.description}</p>}
-          <button className="btn secondary" onClick={() => buy(p)} disabled={busy || !me.pass?.valid}>
-            Buy for {formatAmount(cur === "USD" ? p.price_usd : p.price_khr, cur)}
-          </button>
-        </section>
-      ))}
+      {products.map((p) => {
+        const owned = me.access.find((a) => a.product_id === p.product_id);
+        return (
+          <section key={p.product_id} className="panel stack">
+            <div className="row spread">
+              <h3>{p.name}</h3>
+              <span className="mono">{formatAmount(cur === "USD" ? p.price_usd : p.price_khr, cur)}</span>
+            </div>
+            <p className="muted small">
+              {p.sites.map((s) => SITES[s]?.name ?? s).join(", ")}. {fmtDuration(p.validity_seconds)},{" "}
+              {p.entries >= 0xffffffff ? "unlimited entries" : `${p.entries} ${p.entries === 1 ? "entry" : "entries"}`}.
+            </p>
+            {p.description && <p className="small">{p.description}</p>}
+            {owned ? (
+              <p className="muted small">✓ Active until {fmtDate(owned.expires_at)}. Show your code at the gate.</p>
+            ) : (
+              <button className="btn secondary" onClick={() => buy(p)} disabled={busy || !me.pass?.valid}>
+                Buy for {formatAmount(cur === "USD" ? p.price_usd : p.price_khr, cur)}
+              </button>
+            )}
+          </section>
+        );
+      })}
       {me.visits.length > 0 && (
         <section className="stack">
           <h2>Places you have visited</h2>
