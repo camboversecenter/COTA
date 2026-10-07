@@ -734,7 +734,11 @@ function StaffKeys() {
         headers: { "content-type": "application/json", "x-bootstrap": bootstrap },
         body: JSON.stringify(body),
       });
-      if (!res.ok) throw new Error(((await res.json()) as { error: string }).error ?? `HTTP ${res.status}`);
+      if (!res.ok) {
+        if (res.status === 403) throw new Error("Incorrect bootstrap secret.");
+        const data = await res.json().catch(() => ({})) as { error?: string };
+        throw new Error(data.error ?? "Could not create key — try again.");
+      }
       const { key } = (await res.json()) as { key: string };
       setCreated(key);
       setLabel("");
@@ -766,8 +770,11 @@ function StaffKeys() {
       <Notice kind="error">{error}</Notice>
       {created && (
         <div className="panel stack">
-          <p className="small muted">Key created — copy it now, it will not be shown again:</p>
+          <p className="small muted">Copy this now — it will not be shown again.</p>
           <p className="mono break">{created}</p>
+          <button type="button" className="btn secondary" onClick={() => void navigator.clipboard?.writeText(created)}>
+            Copy key
+          </button>
         </div>
       )}
       <button className="btn" disabled={busy || !bootstrap || !label.trim()}>
