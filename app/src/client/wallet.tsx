@@ -58,6 +58,7 @@ interface WalletState {
   error: string | null;
   busy: boolean;
   create(pin: string, withPasskey: boolean): Promise<string | null>;
+  restore(mnemonic: string, pin: string, withPasskey: boolean): Promise<void>;
   unlockPin(pin: string): Promise<boolean>;
   unlockPasskey(): Promise<boolean>;
   lock(): Promise<void>;
@@ -129,6 +130,19 @@ export function WalletProvider({ children }: { children: ReactNode }) {
       }),
     [run, w, signIn],
   );
+
+  const restore = useCallback(
+    (mnemonic: string, pin: string, withPasskey: boolean) =>
+      run(async () => {
+        const id = crypto.randomUUID();
+        const res = await w.importWallet(id, pin, mnemonic, { withPasskey, email: "Nokor Pass" });
+        if (!res) return;
+        vaultId.set(id);
+        setHasWallet(true);
+        await signIn(res.address);
+      }),
+    [run, w, signIn],
+  ) as (mnemonic: string, pin: string, withPasskey: boolean) => Promise<void>;
 
   const unlockPin = useCallback(
     async (pin: string) =>
@@ -209,6 +223,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
       error,
       busy,
       create,
+      restore,
       unlockPin,
       unlockPasskey,
       lock,
@@ -218,7 +233,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
       backupPhrase,
       confirmBackup: () => setBackupPhrase(null),
     }),
-    [backupPhrase, config, hasWallet, w.isUnlocked, w.address, signedIn, error, busy, create, unlockPin, unlockPasskey, lock, forget, sign],
+    [backupPhrase, config, hasWallet, w.isUnlocked, w.address, signedIn, error, busy, create, restore, unlockPin, unlockPasskey, lock, forget, sign],
   );
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }

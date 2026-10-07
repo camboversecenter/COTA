@@ -60,9 +60,11 @@ function Backup({ phrase, onDone }: { phrase: string; onDone: () => void }) {
 
 function Setup() {
   const w = useWallet();
+  const [mode, setMode] = useState<"create" | "restore">("create");
   const [pin, setPin] = useState("");
   const [pin2, setPin2] = useState("");
   const [passkey, setPasskey] = useState(true);
+  const [phrase, setPhrase] = useState("");
   const [local, setLocal] = useState<string | null>(null);
 
   const submit = async (e: React.FormEvent) => {
@@ -70,18 +72,47 @@ function Setup() {
     setLocal(null);
     if (!/^\d{6,}$/.test(pin)) return setLocal("Use at least 6 digits.");
     if (pin !== pin2) return setLocal("The two PINs do not match.");
-    await w.create(pin, passkey);
+    if (mode === "restore") {
+      const words = phrase.trim().split(/\s+/);
+      if (words.length !== 12 && words.length !== 24) return setLocal("Enter your 12 or 24 recovery words.");
+      await w.restore(phrase.trim(), pin, passkey);
+    } else {
+      await w.create(pin, passkey);
+    }
   };
 
   return (
     <form className="stack-lg" onSubmit={submit}>
+      <div className="segmented" role="group" aria-label="Setup">
+        <button type="button" aria-pressed={mode === "create"} onClick={() => { setMode("create"); setLocal(null); }}>
+          New wallet
+        </button>
+        <button type="button" aria-pressed={mode === "restore"} onClick={() => { setMode("restore"); setLocal(null); }}>
+          Restore wallet
+        </button>
+      </div>
       <div className="stack">
-        <h1>Create your Nokor Pass wallet</h1>
+        <h1>{mode === "create" ? "Create your Nokor Pass wallet" : "Restore your wallet"}</h1>
         <p className="muted">
-          Your wallet holds your pass, your riel and dollars, your site tickets and your Nokor Points. Its key stays on this phone; we
-          only store it encrypted.
+          {mode === "create"
+            ? "Your wallet holds your pass, your riel and dollars, your site tickets and your Nokor Points. Its key stays on this phone; we only store it encrypted."
+            : "Enter your 12 recovery words to restore your wallet on this device."}
         </p>
       </div>
+      {mode === "restore" && (
+        <Field label="Recovery words (12 or 24 words, separated by spaces)">
+          <textarea
+            rows={3}
+            autoComplete="off"
+            autoCorrect="off"
+            autoCapitalize="off"
+            spellCheck={false}
+            value={phrase}
+            onChange={(e) => setPhrase(e.target.value)}
+            placeholder="word1 word2 word3 …"
+          />
+        </Field>
+      )}
       <Field label="Choose a PIN (6 digits or more)">
         <input inputMode="numeric" type="password" autoComplete="new-password" value={pin} onChange={(e) => setPin(e.target.value)} />
       </Field>
@@ -94,7 +125,7 @@ function Setup() {
       </label>
       <Notice kind="error">{local ?? w.error}</Notice>
       <button className="btn" disabled={w.busy}>
-        {w.busy ? "Creating your wallet…" : "Create wallet"}
+        {w.busy ? (mode === "create" ? "Creating your wallet…" : "Restoring…") : (mode === "create" ? "Create wallet" : "Restore wallet")}
       </button>
     </form>
   );
