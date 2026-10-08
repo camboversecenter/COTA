@@ -7,7 +7,7 @@ import { stringToHex } from "viem";
 import { CURRENCIES, formatAmount, SITES, type PendingRequest } from "../shared/protocol";
 import { api } from "./api";
 import { homeCurrency, inHome } from "./rates";
-import { fmtDuration, Notice, useAction, useNow } from "./ui";
+import { fmtDuration, Icon, Notice, useAction, useNow } from "./ui";
 import { deadlineIn, useWallet } from "./wallet";
 
 const categoryName: Record<string, string> = {
@@ -113,10 +113,12 @@ export function Approval({ req, onDone }: { req: PendingRequest; onDone: (messag
         <Notice kind="error">{error}</Notice>
         <div className="btn-row">
           <button className="btn secondary" onClick={decline} disabled={busy}>
+            <Icon name="x" size={18} />
             Decline
           </button>
           <button className="btn" onClick={approve} disabled={busy || left <= 0}>
-            {busy ? "Approving…" : req.kind === "entry" ? "Let me in" : "Approve"}
+            <Icon name="check" size={18} />
+            {busy ? "Approving…" : req.kind === "entry" ? "Let me in" : `Pay ${formatAmount(req.amount!, req.currency!)}`}
           </button>
         </div>
         <p className="muted small">{left > 0 ? `Expires in ${fmtDuration(left)}.` : "This request has expired."}</p>
