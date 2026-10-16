@@ -5,7 +5,7 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { formatAmount, SITES, toMinor, type Currency } from "../shared/protocol";
 import { staffApi, staffKey } from "./api";
-import { Field, fmtDate, Notice, TopBar, useAction, usePoll } from "./ui";
+import { Empty, Field, fmtDate, Icon, Notice, TopBar, useAction, usePoll, type IconName } from "./ui";
 
 type Role = "issuer" | "gate" | "operator";
 type StaffRole = Role;
@@ -16,6 +16,7 @@ interface Staff {
 }
 
 const roleName: Record<Role, string> = { issuer: "Immigration", gate: "Site gate", operator: "Operator" };
+const roleIcon: Record<Role, IconName> = { issuer: "immigration", gate: "gate", operator: "operator" };
 
 /** Wraps a console: asks for the staff key until one with the right role is entered. */
 export function StaffGate({ role, children }: { role: Role; children: (s: Staff) => ReactNode }) {
@@ -26,7 +27,7 @@ export function StaffGate({ role, children }: { role: Role; children: (s: Staff)
   const check = () =>
     run(async () => {
       const s = await staffApi.get<Staff>("/staff/whoami");
-      if (s.role !== role && !(role === "issuer" && s.role === "operator")) {
+      if (s.role !== role) {
         throw new Error(`This key is for ${roleName[s.role]}, not ${roleName[role]}.`);
       }
       setMe(s);
@@ -49,6 +50,7 @@ export function StaffGate({ role, children }: { role: Role; children: (s: Staff)
         right={
           me ? (
             <button className="btn secondary inline" onClick={signOut}>
+              <Icon name="logout" size={16} />
               Sign out
             </button>
           ) : undefined
@@ -56,9 +58,17 @@ export function StaffGate({ role, children }: { role: Role; children: (s: Staff)
       />
       {me ? (
         <div className="stack-lg">
-          <p className="muted small">
-            {roleName[me.role]}, {me.label}
-          </p>
+          <div className="desk-head">
+            <span className="tile">
+              <Icon name={roleIcon[role]} size={22} />
+            </span>
+            <div className="grow">
+              <h1>{roleName[role]}</h1>
+              <p className="muted small">
+                {me.label}
+              </p>
+            </div>
+          </div>
           {children(me)}
         </div>
       ) : (
@@ -71,6 +81,9 @@ export function StaffGate({ role, children }: { role: Role; children: (s: Staff)
           }}
         >
           <div className="stack">
+            <span className="tile lg">
+              <Icon name={roleIcon[role]} size={26} />
+            </span>
             <h1>{roleName[role]} console</h1>
             <p className="muted">Enter the staff key issued to this desk or device.</p>
           </div>
@@ -91,7 +104,7 @@ function CodeInput({ value, onChange, label = "Holder's code" }: { value: string
   return (
     <Field label={label}>
       <input
-        className="mono"
+        className="mono code-input"
         value={value}
         onChange={(e) => onChange(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, ""))}
         maxLength={6}
@@ -148,10 +161,10 @@ function IssuerDesk() {
     <form className="stack-lg" onSubmit={submit}>
       <div className="segmented" role="group" aria-label="Desk">
         <button type="button" aria-pressed={mode === "arrive"} onClick={() => setMode("arrive")}>
-          Arrival: issue pass
+          Arrival
         </button>
         <button type="button" aria-pressed={mode === "depart"} onClick={() => setMode("depart")}>
-          Departure: close pass
+          Departure
         </button>
       </div>
       <p className="muted">
@@ -200,7 +213,7 @@ function GateDesk({ staff }: { staff: Staff }) {
   const [code, setCode] = useState("");
   const [req, setReq] = useState<string | null>(null);
   const [status, setStatus] = useState<{ status: string; error: string | null } | null>(null);
-  const { busy, error, run } = useAction();
+  const { busy, error, run, setError } = useAction();
 
   usePoll(
     () => {
@@ -257,8 +270,25 @@ function GateDesk({ staff }: { staff: Staff }) {
         </section>
       ) : (
         <form className="stack-lg" onSubmit={start}>
-          <CodeInput value={code} onChange={setCode} label="Visitor's code" />
-          <Notice kind="error">{error}</Notice>
+          {error && (
+            <section className="panel stack gate-result declined" aria-live="assertive">
+              <div className="row">
+                <span className="result-icon bad">
+                  <Icon name="x" size={28} />
+                </span>
+                <p className="big grow">Do not admit</p>
+              </div>
+              <p>{error}</p>
+            </section>
+          )}
+          <CodeInput
+            value={code}
+            onChange={(v) => {
+              setCode(v);
+              setError(null);
+            }}
+            label={error ? "Next visitor's code" : "Visitor's code"}
+          />
           <button className="btn" disabled={busy || code.length !== 6}>
             Check access
           </button>
@@ -278,20 +308,21 @@ type OpTab = "topup" | "merchants" | "products" | "fares" | "disputes" | "settin
 
 function OperatorDesk() {
   const [tab, setTab] = useState<OpTab>("topup");
-  const tabs: [OpTab, string][] = [
-    ["topup", "Top up"],
-    ["merchants", "Merchants"],
-    ["products", "Site access"],
-    ["fares", "Fares"],
-    ["disputes", "Disputes"],
-    ["settings", "Settings"],
-    ["keys", "Staff keys"],
+  const tabs: [OpTab, string, IconName][] = [
+    ["topup", "Top up", "topup"],
+    ["merchants", "Merchants", "merchants"],
+    ["products", "Site access", "pass"],
+    ["fares", "Fares", "fares"],
+    ["disputes", "Disputes", "disputes"],
+    ["settings", "Settings", "settings"],
+    ["keys", "Staff keys", "keys"],
   ];
   return (
     <div className="stack-lg">
-      <nav className="segmented wrap" aria-label="Operator">
-        {tabs.map(([id, label]) => (
+      <nav className="menu" aria-label="Operator">
+        {tabs.map(([id, label, icon]) => (
           <button key={id} aria-pressed={tab === id} onClick={() => setTab(id)}>
+            <Icon name={icon} size={18} />
             {label}
           </button>
         ))}
@@ -437,7 +468,7 @@ function Merchants() {
       <section className="stack">
         <h2>Registered merchants</h2>
         {list.length === 0 ? (
-          <p className="muted">None yet.</p>
+          <Empty icon="merchants" title="No merchants yet">Register the first one above.</Empty>
         ) : (
           <ul className="list">
             {list.map((m) => (
@@ -550,7 +581,7 @@ function Products() {
             <label key={id} className="row small">
               <input
                 type="checkbox"
-                style={{ width: "auto" }}
+               
                 checked={sites.includes(id)}
                 onChange={(e) => setSites((v) => (e.target.checked ? [...v, id] : v.filter((x) => x !== id)))}
               />
@@ -680,7 +711,7 @@ function Disputes() {
       <Notice kind="error">{error}</Notice>
       <Notice kind="ok">{msg}</Notice>
       {list.length === 0 ? (
-        <p className="muted">No open disputes.</p>
+        <Empty icon="check" title="No open disputes">Disputed payments appear here for review.</Empty>
       ) : (
         <ul className="list">
           {list.map((d) => (

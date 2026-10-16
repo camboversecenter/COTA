@@ -1,17 +1,17 @@
 // Indicative rates for showing a visitor the amount in their home currency
 // (SPEC §5.1). Display only; the payment is always in USD or KHR. A deployment
 // would take these from the central bank's daily reference rate.
-export const HOME_CURRENCIES: Record<string, { perUsd: number; name: string }> = {
-  USD: { perUsd: 1, name: "US dollar" },
-  EUR: { perUsd: 0.92, name: "Euro" },
-  GBP: { perUsd: 0.78, name: "Pound" },
-  AUD: { perUsd: 1.52, name: "Australian dollar" },
-  CNY: { perUsd: 7.2, name: "Yuan" },
-  KRW: { perUsd: 1380, name: "Won" },
-  JPY: { perUsd: 148, name: "Yen" },
-  THB: { perUsd: 33, name: "Baht" },
-  VND: { perUsd: 25400, name: "Dong" },
-  INR: { perUsd: 84, name: "Rupee" },
+export const HOME_CURRENCIES: Record<string, { perUsd: number; name: string; symbol: string }> = {
+  USD: { perUsd: 1, name: "US dollar", symbol: "$" },
+  EUR: { perUsd: 0.92, name: "Euro", symbol: "€" },
+  GBP: { perUsd: 0.78, name: "British pound", symbol: "£" },
+  AUD: { perUsd: 1.52, name: "Australian dollar", symbol: "A$" },
+  CNY: { perUsd: 7.2, name: "Chinese yuan", symbol: "¥" },
+  KRW: { perUsd: 1380, name: "South Korean won", symbol: "₩" },
+  JPY: { perUsd: 148, name: "Japanese yen", symbol: "¥" },
+  THB: { perUsd: 33, name: "Thai baht", symbol: "฿" },
+  VND: { perUsd: 25400, name: "Vietnamese dong", symbol: "₫" },
+  INR: { perUsd: 84, name: "Indian rupee", symbol: "₹" },
 };
 export const KHR_PER_USD = 4000;
 

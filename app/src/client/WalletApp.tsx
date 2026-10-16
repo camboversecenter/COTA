@@ -4,7 +4,7 @@ import { api } from "./api";
 import { Approval } from "./Approval";
 import { ActivityTab, ClaimGift, PassTab, PointsTab, SitesTab, type Me } from "./HolderTabs";
 import { ChargeTab, EarningsTab } from "./MerchantTabs";
-import { Field, Notice, TopBar, useAction, usePoll } from "./ui";
+import { Field, Icon, Notice, TopBar, useAction, usePoll, type IconName } from "./ui";
 import { useWallet } from "./wallet";
 
 type Tab = "pass" | "activity" | "sites" | "points" | "charge" | "earnings";
@@ -48,7 +48,7 @@ function Backup({ phrase, onDone }: { phrase: string; onDone: () => void }) {
         ))}
       </div>
       <label className="row small">
-        <input type="checkbox" style={{ width: "auto" }} checked={ok} onChange={(e) => setOk(e.target.checked)} />
+        <input type="checkbox" checked={ok} onChange={(e) => setOk(e.target.checked)} />
         <span>I have written them down somewhere safe</span>
       </label>
       <button className="btn" onClick={onDone} disabled={!ok}>
@@ -67,11 +67,14 @@ function Setup() {
   const [phrase, setPhrase] = useState("");
   const [local, setLocal] = useState<string | null>(null);
 
+  const pinProblem = !pin ? null : !/^\d+$/.test(pin) ? "Use digits only." : pin.length < 6 ? `${6 - pin.length} more digit${pin.length === 5 ? "" : "s"} needed.` : null;
+  const matchProblem = pin2 && (pin2.length >= pin.length || !pin.startsWith(pin2)) && pin2 !== pin ? "The two PINs do not match." : null;
+  const pinReady = /^\d{6,}$/.test(pin) && pin === pin2;
+
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLocal(null);
-    if (!/^\d{6,}$/.test(pin)) return setLocal("Use at least 6 digits.");
-    if (pin !== pin2) return setLocal("The two PINs do not match.");
+    if (!pinReady) return;
     if (mode === "restore") {
       const words = phrase.trim().split(/\s+/);
       if (words.length !== 12 && words.length !== 24) return setLocal("Enter your 12 or 24 recovery words.");
@@ -113,18 +116,32 @@ function Setup() {
           />
         </Field>
       )}
-      <Field label="Choose a PIN (6 digits or more)">
-        <input inputMode="numeric" type="password" autoComplete="new-password" value={pin} onChange={(e) => setPin(e.target.value)} />
+      <Field label="Choose a PIN (6 digits or more)" hint={pinProblem ?? (pin.length >= 6 ? "Looks good." : undefined)} invalid={!!pin && !/^\d+$/.test(pin)}>
+        <input
+          inputMode="numeric"
+          type="password"
+          autoComplete="new-password"
+          value={pin}
+          onChange={(e) => setPin(e.target.value)}
+          aria-invalid={!!pin && !/^\d+$/.test(pin)}
+        />
       </Field>
-      <Field label="Enter the PIN again">
-        <input inputMode="numeric" type="password" autoComplete="new-password" value={pin2} onChange={(e) => setPin2(e.target.value)} />
+      <Field label="Enter the PIN again" hint={matchProblem ?? (pin2 && pin2 === pin && pin.length >= 6 ? "PINs match." : undefined)} invalid={!!matchProblem}>
+        <input
+          inputMode="numeric"
+          type="password"
+          autoComplete="new-password"
+          value={pin2}
+          onChange={(e) => setPin2(e.target.value)}
+          aria-invalid={!!matchProblem}
+        />
       </Field>
       <label className="row small">
-        <input type="checkbox" style={{ width: "auto" }} checked={passkey} onChange={(e) => setPasskey(e.target.checked)} />
+        <input type="checkbox" className="switch" checked={passkey} onChange={(e) => setPasskey(e.target.checked)} />
         <span>Also unlock with this phone's fingerprint or face (passkey)</span>
       </label>
       <Notice kind="error">{local ?? w.error}</Notice>
-      <button className="btn" disabled={w.busy}>
+      <button className="btn" disabled={w.busy || !pinReady}>
         {w.busy ? (mode === "create" ? "Creating your wallet…" : "Restoring…") : (mode === "create" ? "Create wallet" : "Restore wallet")}
       </button>
     </form>
@@ -156,15 +173,17 @@ function Unlock() {
         {w.busy ? "Unlocking…" : "Unlock"}
       </button>
       <button type="button" className="btn secondary" onClick={() => void w.unlockPasskey()} disabled={w.busy}>
+        <Icon name="fingerprint" size={18} />
         Unlock with passkey
       </button>
       <button
         type="button"
-        className="btn danger"
+        className="btn plain danger"
         onClick={() => {
           if (confirm("Remove this wallet from this phone? You will need your recovery words to use it again.")) w.forget();
         }}
       >
+        <Icon name="trash" size={18} />
         Remove wallet from this phone
       </button>
     </form>
@@ -197,17 +216,17 @@ function Main({ claim }: { claim?: { giftId: number; key: string } }) {
   };
 
   const isMerchant = !!me?.merchant;
-  const tabs: [Tab, string][] = isMerchant
+  const tabs: [Tab, string, IconName][] = isMerchant
     ? [
-        ["charge", "Charge"],
-        ["earnings", "Earnings"],
-        ["pass", "Pass"],
+        ["charge", "Charge", "charge"],
+        ["earnings", "Earnings", "earnings"],
+        ["pass", "Pass", "pass"],
       ]
     : [
-        ["pass", "Pass"],
-        ["activity", "Activity"],
-        ["sites", "Sites"],
-        ["points", "Points"],
+        ["pass", "Pass", "pass"],
+        ["activity", "Activity", "activity"],
+        ["sites", "Sites", "sites"],
+        ["points", "Points", "points"],
       ];
   const current: Tab = !tab || (isMerchant && !["charge", "earnings", "pass"].includes(tab)) ? (isMerchant ? "charge" : "pass") : tab;
 
@@ -216,21 +235,15 @@ function Main({ claim }: { claim?: { giftId: number; key: string } }) {
       <TopBar
         right={
           <button className="btn secondary inline" onClick={() => void w.lock()}>
+            <Icon name="lock" size={16} />
             Lock
           </button>
         }
       />
       <div className="stack-lg">
-        {toast && (
-          <div className="row">
-            <div className="grow">
-              <Notice kind="ok">{toast}</Notice>
-            </div>
-            <button className="btn secondary inline" onClick={() => setToast(null)} aria-label="Dismiss">
-              OK
-            </button>
-          </div>
-        )}
+        <Notice kind="ok" onClose={() => setToast(null)}>
+          {toast}
+        </Notice>
         <Notice kind="error">{error}</Notice>
         {claim ? (
           <ClaimGift claim={claim} me={me} onDone={done} />
@@ -253,9 +266,10 @@ function Main({ claim }: { claim?: { giftId: number; key: string } }) {
       {!claim && (
         <nav className="tabs" aria-label="Wallet">
           <div className="tabs-inner">
-            {tabs.map(([id, label]) => (
-              <button key={id} className="tab" aria-current={current === id ? "page" : undefined} onClick={() => setTab(id)}>
-                {label}
+            {tabs.map(([id, label, icon]) => (
+              <button key={id} className="tab" aria-label={label} aria-current={current === id ? "page" : undefined} onClick={() => setTab(id)}>
+                <Icon name={icon} size={22} />
+                <span>{label}</span>
               </button>
             ))}
           </div>
