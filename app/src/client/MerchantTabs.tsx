@@ -7,7 +7,7 @@ import { keccak256, stringToHex } from "viem";
 import { CURRENCIES, formatAmount, toMinor, type Currency } from "../shared/protocol";
 import { api } from "./api";
 import type { Me } from "./HolderTabs";
-import { Field, fmtDate, fmtDuration, Notice, useAction, useNow, usePoll } from "./ui";
+import { Empty, Field, fmtDate, fmtDuration, Icon, Notice, Pending, useAction, useNow, usePoll } from "./ui";
 import { deadlineIn, useWallet } from "./wallet";
 
 interface Fare {
@@ -44,6 +44,13 @@ export function ChargeTab({ merchant }: { merchant: NonNullable<Me["merchant"]> 
 
   const routes = [...new Set(fares.map((f) => f.route))];
   const reference = fares.find((f) => f.route === route && f.currency === cur);
+  const aboveReference = (() => {
+    try {
+      return !!reference && !!amount && toMinor(amount, cur) > reference.amount;
+    } catch {
+      return false;
+    }
+  })();
 
   const pending = sent && (!status || status.status === "pending" || status.status === "submitting");
   usePoll(
@@ -86,11 +93,17 @@ export function ChargeTab({ merchant }: { merchant: NonNullable<Me["merchant"]> 
     const st = status?.status === "submitting" ? "pending" : (status?.status ?? "pending");
     return (
       <div className="stack-lg">
+        {st !== "pending" && (
+          <span className={`result-icon ${st === "approved" ? "ok" : "bad"}`}>
+            <Icon name={st === "approved" ? "check" : "x"} size={28} />
+          </span>
+        )}
         <h1>{st === "approved" ? "Paid" : st === "declined" ? "Declined" : st === "failed" || st === "expired" ? "Not paid" : "Waiting for the customer"}</h1>
         <div className="charge" aria-label={`${amount} ${cur}`}>
           <span className="figure">{formatAmount(toMinor(amount, cur), cur).split(" ")[0]}</span>
           <span className={`iso ${cur === "KHR" ? "khr" : ""}`}>{cur}</span>
         </div>
+        {st === "pending" && <Pending>Waiting for approval · sent {fmtDuration(now - sent.at)} ago</Pending>}
         {st === "pending" ? (
           <Notice>The request is on the customer's phone. They see your registered name, the amount and the currency, then approve it.</Notice>
         ) : st === "approved" ? (
@@ -108,9 +121,10 @@ export function ChargeTab({ merchant }: { merchant: NonNullable<Me["merchant"]> 
           </Notice>
         )}
         <button className={st === "pending" ? "btn secondary" : "btn"} onClick={reset}>
+          <Icon name="plus" size={18} />
           {st === "pending" ? "Start a new charge" : "New charge"}
         </button>
-        {(st === "pending") && <p className="muted small">Sent {fmtDuration(now - sent.at)} ago.</p>}
+
       </div>
     );
   }
@@ -125,14 +139,14 @@ export function ChargeTab({ merchant }: { merchant: NonNullable<Me["merchant"]> 
       </div>
       <Field label="Customer's code">
         <input
-          className="mono"
+          className="mono code-input"
           value={code}
           onChange={(e) => setCode(e.target.value.toUpperCase())}
           maxLength={6}
           autoCapitalize="characters"
           autoComplete="off"
           spellCheck={false}
-          placeholder="e.g. K7P2QD"
+          placeholder="K7P2QD"
         />
       </Field>
       <div className="segmented" role="group" aria-label="Currency">
@@ -164,12 +178,19 @@ export function ChargeTab({ merchant }: { merchant: NonNullable<Me["merchant"]> 
       <Field label={`Amount in ${cur}`}>
         <input inputMode="decimal" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder={cur === "USD" ? "5.00" : "20000"} />
       </Field>
-      {reference && <p className="muted small">Reference fare for this route: {formatAmount(reference.amount, cur)}.</p>}
+      {reference && (
+        <p className={aboveReference ? "hint warn" : "hint"}>
+          {aboveReference
+            ? `Above the reference fare of ${formatAmount(reference.amount, cur)}. The customer will see a warning.`
+            : `Reference fare for this route: ${formatAmount(reference.amount, cur)}.`}
+        </p>
+      )}
       <Field label="What is it for (optional)">
         <input value={description} onChange={(e) => setDescription(e.target.value)} maxLength={80} />
       </Field>
       <Notice kind="error">{error}</Notice>
       <button className="btn" disabled={busy || code.trim().length < 6 || !amount}>
+        <Icon name="charge" size={18} />
         {busy ? "Sending…" : "Send to customer's phone"}
       </button>
     </form>
@@ -197,15 +218,18 @@ export function EarningsTab() {
   return (
     <div className="stack-lg">
       <h1>Earnings</h1>
-      <div className="balances">
-        {(["USD", "KHR"] as Currency[]).map((c) => (
-          <div className="balance" key={c}>
-            <p className="muted small">Ready to cash out</p>
-            <p className="amount mono">{formatAmount(s.available[c], c)}</p>
-            {!!s.held[c] && <p className="muted small">{formatAmount(s.held[c]!, c)} still held</p>}
-          </div>
-        ))}
-      </div>
+      <section className="stack">
+        <h2 className="eyebrow">Ready to cash out</h2>
+        <div className="balances">
+          {(["USD", "KHR"] as Currency[]).map((c) => (
+            <div className="balance" key={c}>
+              <p className="muted small">{c === "USD" ? "US dollars" : "Riel"}</p>
+              <p className="amount mono">{formatAmount(s.available[c], c)}</p>
+              {!!s.held[c] && <p className="muted small">+ {formatAmount(s.held[c]!, c)} held</p>}
+            </div>
+          ))}
+        </div>
+      </section>
       <p className="muted small">
         Payments are held for the dispute window, plus a longer hold for new merchants. After that they are released here
         automatically.
@@ -216,9 +240,9 @@ export function EarningsTab() {
       <section className="stack">
         <h2>Recent payments</h2>
         {s.recent.length === 0 ? (
-          <p className="muted">No payments yet. Charge a customer from the Charge tab.</p>
+          <Empty icon="earnings" title="No payments yet">Charge a customer from the Charge tab.</Empty>
         ) : (
-          <ul className="list">
+          <ul className="list panel">
             {s.recent.map((p) => (
               <li key={`${p.currency}-${p.payment_id}`} className="row">
                 <div className="grow">
@@ -251,9 +275,18 @@ function CashOut({ available, onDone, address }: { available: Record<Currency, n
   if (!open)
     return (
       <button className="btn secondary" onClick={() => setOpen(true)} disabled={!available.USD && !available.KHR}>
+        <Icon name="cash" size={18} />
         Cash out to my bank
       </button>
     );
+
+  const over = (() => {
+    try {
+      return !!amount && toMinor(amount, cur) > available[cur];
+    } catch {
+      return false;
+    }
+  })();
 
   const submit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -289,8 +322,12 @@ function CashOut({ available, onDone, address }: { available: Record<Currency, n
           </button>
         ))}
       </div>
-      <Field label={`Amount in ${cur} (up to ${formatAmount(available[cur], cur)})`}>
-        <input inputMode="decimal" value={amount} onChange={(e) => setAmount(e.target.value)} />
+      <Field
+        label={`Amount in ${cur}`}
+        hint={over ? `You have ${formatAmount(available[cur], cur)} ready to cash out.` : `Up to ${formatAmount(available[cur], cur)}.`}
+        invalid={over}
+      >
+        <input inputMode="decimal" value={amount} onChange={(e) => setAmount(e.target.value)} aria-invalid={over} />
       </Field>
       <Field label="Bank account">
         <input value={bank} onChange={(e) => setBank(e.target.value)} placeholder="Bank name and account number" />
@@ -298,7 +335,7 @@ function CashOut({ available, onDone, address }: { available: Record<Currency, n
       <p className="muted small">Only a fingerprint of the account goes on chain. There is a daily limit, set by your merchant class.</p>
       <Notice kind="error">{error}</Notice>
       <Notice kind="ok">{done}</Notice>
-      <button className="btn" disabled={busy}>
+      <button className="btn" disabled={busy || over || !amount || !bank.trim()}>
         {busy ? "Signing…" : "Sign and cash out"}
       </button>
     </form>

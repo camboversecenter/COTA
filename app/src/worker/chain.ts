@@ -123,17 +123,18 @@ export class Relayer extends DurableObject<Env> {
       args,
     });
     const hash = await wallet.writeContract(request);
-    const receipt = await pub.waitForTransactionReceipt({ hash });
+    const receipt = await pub.waitForTransactionReceipt({ hash, retryCount: 10, pollingInterval: 3000 });
     if (receipt.status !== "success") throw new Error(`Transaction reverted: ${hash}`);
-    const block = await pub.getBlock({ blockNumber: receipt.blockNumber });
 
     const byAddress = new Map(
-      Object.entries(chainConfig(env).contracts).map(([k, v]) => [v.toLowerCase(), k as ContractName]),
+      Object.entries(chainConfig(env).contracts)
+        .filter((entry): entry is [string, `0x${string}`] => typeof entry[1] === "string")
+        .map(([k, v]) => [v.toLowerCase(), k as ContractName]),
     );
     const logs = parseEventLogs({ abi: ALL_ABIS, logs: receipt.logs, strict: false });
     return {
       hash,
-      blockTimestamp: Number(block.timestamp),
+      blockTimestamp: Math.floor(Date.now() / 1000),
       events: logs.map((l) => ({
         contract: byAddress.get(l.address.toLowerCase()) ?? null,
         eventName: l.eventName as string,

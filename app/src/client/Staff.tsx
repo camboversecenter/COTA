@@ -5,9 +5,10 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { formatAmount, SITES, toMinor, type Currency } from "../shared/protocol";
 import { staffApi, staffKey } from "./api";
-import { Field, fmtDate, Notice, TopBar, useAction, usePoll } from "./ui";
+import { Empty, Field, fmtDate, Icon, Notice, TopBar, useAction, usePoll, type IconName } from "./ui";
 
 type Role = "issuer" | "gate" | "operator";
+type StaffRole = Role;
 interface Staff {
   role: Role;
   label: string;
@@ -15,6 +16,7 @@ interface Staff {
 }
 
 const roleName: Record<Role, string> = { issuer: "Immigration", gate: "Site gate", operator: "Operator" };
+const roleIcon: Record<Role, IconName> = { issuer: "immigration", gate: "gate", operator: "operator" };
 
 /** Wraps a console: asks for the staff key until one with the right role is entered. */
 export function StaffGate({ role, children }: { role: Role; children: (s: Staff) => ReactNode }) {
@@ -25,7 +27,7 @@ export function StaffGate({ role, children }: { role: Role; children: (s: Staff)
   const check = () =>
     run(async () => {
       const s = await staffApi.get<Staff>("/staff/whoami");
-      if (s.role !== role && !(role === "issuer" && s.role === "operator")) {
+      if (s.role !== role) {
         throw new Error(`This key is for ${roleName[s.role]}, not ${roleName[role]}.`);
       }
       setMe(s);
@@ -48,6 +50,7 @@ export function StaffGate({ role, children }: { role: Role; children: (s: Staff)
         right={
           me ? (
             <button className="btn secondary inline" onClick={signOut}>
+              <Icon name="logout" size={16} />
               Sign out
             </button>
           ) : undefined
@@ -55,9 +58,17 @@ export function StaffGate({ role, children }: { role: Role; children: (s: Staff)
       />
       {me ? (
         <div className="stack-lg">
-          <p className="muted small">
-            {roleName[me.role]}, {me.label}
-          </p>
+          <div className="desk-head">
+            <span className="tile">
+              <Icon name={roleIcon[role]} size={22} />
+            </span>
+            <div className="grow">
+              <h1>{roleName[role]}</h1>
+              <p className="muted small">
+                {me.label}
+              </p>
+            </div>
+          </div>
           {children(me)}
         </div>
       ) : (
@@ -70,6 +81,9 @@ export function StaffGate({ role, children }: { role: Role; children: (s: Staff)
           }}
         >
           <div className="stack">
+            <span className="tile lg">
+              <Icon name={roleIcon[role]} size={26} />
+            </span>
             <h1>{roleName[role]} console</h1>
             <p className="muted">Enter the staff key issued to this desk or device.</p>
           </div>
@@ -90,7 +104,7 @@ function CodeInput({ value, onChange, label = "Holder's code" }: { value: string
   return (
     <Field label={label}>
       <input
-        className="mono"
+        className="mono code-input"
         value={value}
         onChange={(e) => onChange(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, ""))}
         maxLength={6}
@@ -130,7 +144,9 @@ function IssuerDesk() {
           validDays: Number(days),
         });
         setResult(
-          `Pass #${r.passId} issued.${r.returning ? ` Returning visitor: previous pass #${r.previousPassId} was closed and linked.` : " First visit."}`,
+          `Pass #${r.passId} issued.${
+            r.returning ? ` Returning visitor: previous pass #${r.previousPassId} was closed and linked.` : " First visit."
+          }`,
         );
       } else {
         const r = await staffApi.post<{ passId: number }>("/issuer/close", { code });
@@ -145,10 +161,10 @@ function IssuerDesk() {
     <form className="stack-lg" onSubmit={submit}>
       <div className="segmented" role="group" aria-label="Desk">
         <button type="button" aria-pressed={mode === "arrive"} onClick={() => setMode("arrive")}>
-          Arrival: issue pass
+          Arrival
         </button>
         <button type="button" aria-pressed={mode === "depart"} onClick={() => setMode("depart")}>
-          Departure: close pass
+          Departure
         </button>
       </div>
       <p className="muted">
@@ -197,7 +213,7 @@ function GateDesk({ staff }: { staff: Staff }) {
   const [code, setCode] = useState("");
   const [req, setReq] = useState<string | null>(null);
   const [status, setStatus] = useState<{ status: string; error: string | null } | null>(null);
-  const { busy, error, run } = useAction();
+  const { busy, error, run, setError } = useAction();
 
   usePoll(
     () => {
@@ -254,8 +270,25 @@ function GateDesk({ staff }: { staff: Staff }) {
         </section>
       ) : (
         <form className="stack-lg" onSubmit={start}>
-          <CodeInput value={code} onChange={setCode} label="Visitor's code" />
-          <Notice kind="error">{error}</Notice>
+          {error && (
+            <section className="panel stack gate-result declined" aria-live="assertive">
+              <div className="row">
+                <span className="result-icon bad">
+                  <Icon name="x" size={28} />
+                </span>
+                <p className="big grow">Do not admit</p>
+              </div>
+              <p>{error}</p>
+            </section>
+          )}
+          <CodeInput
+            value={code}
+            onChange={(v) => {
+              setCode(v);
+              setError(null);
+            }}
+            label={error ? "Next visitor's code" : "Visitor's code"}
+          />
           <button className="btn" disabled={busy || code.length !== 6}>
             Check access
           </button>
@@ -271,23 +304,25 @@ export function Operator() {
   return <StaffGate role="operator">{() => <OperatorDesk />}</StaffGate>;
 }
 
-type OpTab = "topup" | "merchants" | "products" | "fares" | "disputes" | "settings";
+type OpTab = "topup" | "merchants" | "products" | "fares" | "disputes" | "settings" | "keys";
 
 function OperatorDesk() {
   const [tab, setTab] = useState<OpTab>("topup");
-  const tabs: [OpTab, string][] = [
-    ["topup", "Top up"],
-    ["merchants", "Merchants"],
-    ["products", "Site access"],
-    ["fares", "Fares"],
-    ["disputes", "Disputes"],
-    ["settings", "Settings"],
+  const tabs: [OpTab, string, IconName][] = [
+    ["topup", "Top up", "topup"],
+    ["merchants", "Merchants", "merchants"],
+    ["products", "Site access", "pass"],
+    ["fares", "Fares", "fares"],
+    ["disputes", "Disputes", "disputes"],
+    ["settings", "Settings", "settings"],
+    ["keys", "Staff keys", "keys"],
   ];
   return (
     <div className="stack-lg">
-      <nav className="segmented wrap" aria-label="Operator">
-        {tabs.map(([id, label]) => (
+      <nav className="menu" aria-label="Operator">
+        {tabs.map(([id, label, icon]) => (
           <button key={id} aria-pressed={tab === id} onClick={() => setTab(id)}>
+            <Icon name={icon} size={18} />
             {label}
           </button>
         ))}
@@ -298,6 +333,7 @@ function OperatorDesk() {
       {tab === "fares" && <Fares />}
       {tab === "disputes" && <Disputes />}
       {tab === "settings" && <Settings />}
+      {tab === "keys" && <StaffKeys />}
     </div>
   );
 }
@@ -432,7 +468,7 @@ function Merchants() {
       <section className="stack">
         <h2>Registered merchants</h2>
         {list.length === 0 ? (
-          <p className="muted">None yet.</p>
+          <Empty icon="merchants" title="No merchants yet">Register the first one above.</Empty>
         ) : (
           <ul className="list">
             {list.map((m) => (
@@ -510,7 +546,7 @@ function Products() {
         }}
       >
         <h2>New site access product</h2>
-        {merchants.length === 0 && <Notice kind="warn">Register the site authority as a merchant with category “site” first.</Notice>}
+        {merchants.length === 0 && <Notice kind="warn">Register the site authority as a merchant with category "site" first.</Notice>}
         <Field label="Name (up to 31 characters)">
           <input value={name} onChange={(e) => setName(e.target.value)} maxLength={31} placeholder="Angkor 1-day pass" />
         </Field>
@@ -545,7 +581,7 @@ function Products() {
             <label key={id} className="row small">
               <input
                 type="checkbox"
-                style={{ width: "auto" }}
+               
                 checked={sites.includes(id)}
                 onChange={(e) => setSites((v) => (e.target.checked ? [...v, id] : v.filter((x) => x !== id)))}
               />
@@ -675,7 +711,7 @@ function Disputes() {
       <Notice kind="error">{error}</Notice>
       <Notice kind="ok">{msg}</Notice>
       {list.length === 0 ? (
-        <p className="muted">No open disputes.</p>
+        <Empty icon="check" title="No open disputes">Disputed payments appear here for review.</Empty>
       ) : (
         <ul className="list">
           {list.map((d) => (
@@ -705,6 +741,77 @@ function Disputes() {
         Release all payments whose hold has passed
       </button>
     </div>
+  );
+}
+
+function StaffKeys() {
+  const [bootstrap, setBootstrap] = useState("");
+  const [role, setRole] = useState<StaffRole>("issuer");
+  const [label, setLabel] = useState("");
+  const [siteIds, setSiteIds] = useState("");
+  const [created, setCreated] = useState<string | null>(null);
+  const { busy, error, run } = useAction();
+
+  const submit = (e: React.FormEvent) => {
+    e.preventDefault();
+    setCreated(null);
+    void run(async () => {
+      const body: Record<string, unknown> = { role, label: label.trim() };
+      if (role === "gate" && siteIds.trim()) {
+        body.siteIds = siteIds.split(",").map((s) => s.trim()).filter(Boolean);
+      }
+      const res = await fetch("/api/admin/keys", {
+        method: "POST",
+        headers: { "content-type": "application/json", "x-bootstrap": bootstrap },
+        body: JSON.stringify(body),
+      });
+      if (!res.ok) {
+        if (res.status === 403) throw new Error("Incorrect bootstrap secret.");
+        const data = await res.json().catch(() => ({})) as { error?: string };
+        throw new Error(data.error ?? "Could not create key — try again.");
+      }
+      const { key } = (await res.json()) as { key: string };
+      setCreated(key);
+      setLabel("");
+    });
+  };
+
+  return (
+    <form className="panel stack" onSubmit={submit}>
+      <h2>Create staff key</h2>
+      <p className="muted small">Requires the bootstrap secret set in Cloudflare. Each key is shown once — copy it before leaving this page.</p>
+      <Field label="Bootstrap secret">
+        <input type="password" value={bootstrap} onChange={(e) => setBootstrap(e.target.value)} autoComplete="off" />
+      </Field>
+      <Field label="Role">
+        <select value={role} onChange={(e) => setRole(e.target.value as StaffRole)}>
+          <option value="issuer">Issuer — immigration desk</option>
+          <option value="gate">Gate — site checkpoint</option>
+          <option value="operator">Operator — system admin</option>
+        </select>
+      </Field>
+      <Field label="Label (desk or device name)">
+        <input value={label} onChange={(e) => setLabel(e.target.value)} placeholder="Arrivals desk 1" />
+      </Field>
+      {role === "gate" && (
+        <Field label="Site IDs (comma-separated, leave blank for all)">
+          <input value={siteIds} onChange={(e) => setSiteIds(e.target.value)} placeholder="angkor-wat, bayon" />
+        </Field>
+      )}
+      <Notice kind="error">{error}</Notice>
+      {created && (
+        <div className="panel stack">
+          <p className="small muted">Copy this now — it will not be shown again.</p>
+          <p className="mono break">{created}</p>
+          <button type="button" className="btn secondary" onClick={() => void navigator.clipboard?.writeText(created)}>
+            Copy key
+          </button>
+        </div>
+      )}
+      <button className="btn" disabled={busy || !bootstrap || !label.trim()}>
+        {busy ? "Creating…" : "Create key"}
+      </button>
+    </form>
   );
 }
 

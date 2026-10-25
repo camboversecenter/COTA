@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Dashboard } from "./Dashboard";
 import { Gate, Immigration, Operator } from "./Staff";
-import { TopBar } from "./ui";
+import { Icon, TopBar, type IconName } from "./ui";
 import { WalletApp } from "./WalletApp";
 
 function useHash() {
@@ -34,6 +34,13 @@ export function App() {
   }
 }
 
+const CONSOLES: { href: string; icon: IconName; title: string; text: string }[] = [
+  { href: "#/immigration", icon: "immigration", title: "Immigration", text: "Issue a pass on arrival, close it on departure." },
+  { href: "#/gate", icon: "gate", title: "Site gate", text: "Check a visitor's access and record the entry." },
+  { href: "#/operator", icon: "operator", title: "Operator", text: "Top-ups, merchants, site access, fares and disputes." },
+  { href: "#/dashboard", icon: "dashboard", title: "Indicators", text: "Repeat visits, word of mouth and reach beyond Angkor." },
+];
+
 function Home() {
   return (
     <div className="shell">
@@ -46,26 +53,26 @@ function Home() {
             comes next.
           </p>
         </div>
-        <a className="btn" href="#/wallet">
+        <a className="btn cta" href="#/wallet">
+          <Icon name="pass" size={20} />
           Open my wallet
         </a>
-        <nav className="roles stack" aria-label="Other consoles">
-          <a className="role" href="#/immigration">
-            <strong>Immigration</strong>
-            Issue a pass on arrival, close it on departure.
-          </a>
-          <a className="role" href="#/gate">
-            <strong>Site gate</strong>
-            Check a visitor's access and record the entry.
-          </a>
-          <a className="role" href="#/operator">
-            <strong>Operator</strong>
-            Top-ups, merchants, site access, fares and disputes.
-          </a>
-          <a className="role" href="#/dashboard">
-            <strong>Indicators</strong>
-            Repeat visits, word of mouth and reach beyond Angkor.
-          </a>
+        <nav className="stack" aria-label="Other consoles">
+          <h2 className="eyebrow">For staff and partners</h2>
+          <div className="roles">
+            {CONSOLES.map((c) => (
+              <a className="role" href={c.href} key={c.href}>
+                <span className="tile">
+                  <Icon name={c.icon} size={22} />
+                </span>
+                <span className="grow">
+                  <strong>{c.title}</strong>
+                  <span className="muted small">{c.text}</span>
+                </span>
+                <Icon name="chevron" size={18} />
+              </a>
+            ))}
+          </div>
         </nav>
         <p className="muted small">
           Prototype of the open-source COTA reference implementation. Test network only; balances have no value.

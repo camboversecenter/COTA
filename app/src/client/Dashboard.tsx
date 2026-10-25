@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { formatAmount, SITES, type Currency } from "../shared/protocol";
-import { fmtDate, Notice, TopBar, usePoll } from "./ui";
+import { Empty, fmtDate, Notice, TopBar, usePoll } from "./ui";
 
 interface Indicators {
   asOf: number;
@@ -61,7 +61,7 @@ export function Dashboard() {
             <section className="stack">
               <h2>Site entries</h2>
               {d.visitsBySite.length === 0 ? (
-                <p className="muted">No entries yet.</p>
+                <Empty icon="sites" title="No entries yet" />
               ) : (
                 <table className="data">
                   <tbody>
@@ -85,7 +85,7 @@ export function Dashboard() {
             <section className="stack">
               <h2>Where the money goes</h2>
               {d.spendingByPlace.length === 0 ? (
-                <p className="muted">No payments yet.</p>
+                <Empty icon="cash" title="No payments yet" />
               ) : (
                 <table className="data">
                   <thead>
@@ -126,7 +126,7 @@ export function Dashboard() {
 function Kpi({ v, label, note }: { v: string; label: string; note: string }) {
   return (
     <div className="kpi">
-      <div className={v === "No data yet" ? "v empty" : "v"}>{v}</div>
+      <div className={v === "No data yet" ? "v none" : "v"}>{v}</div>
       <div>{label}</div>
       <div className="note">{note}</div>
     </div>
