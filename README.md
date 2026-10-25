@@ -148,6 +148,33 @@ In this prototype, `Deploy.s.sol` gives every operational role to the relayer ad
 
 `docs/SPEC.md` §11–12 lists the remaining limits.
 
+## Testing on Base Sepolia
+
+The contracts are deployed on Base Sepolia (chain 84532). The live app is at **https://cota.camboversecenter-3ec.workers.dev**.
+
+### Contract addresses
+
+| Contract | Address |
+| --- | --- |
+| NokorPass | [`0xaCB11053B3B74E060765Cb09d10f86DaF0Dc69dA`](https://sepolia.basescan.org/address/0xaCB11053B3B74E060765Cb09d10f86DaF0Dc69dA) |
+| NokorRegistry | [`0x311C8FCacbD18F3Db5f451AfbD955b7A7eB9C43C`](https://sepolia.basescan.org/address/0x311C8FCacbD18F3Db5f451AfbD955b7A7eB9C43C) |
+| kUSD | [`0x7b1864aaCD65a7eC834177818b05A5c2f0AAad1c`](https://sepolia.basescan.org/address/0x7b1864aaCD65a7eC834177818b05A5c2f0AAad1c) |
+| kRIEL | [`0x421528cE814D59Ed9Eae825bE7B5758A62A6bDF2`](https://sepolia.basescan.org/address/0x421528cE814D59Ed9Eae825bE7B5758A62A6bDF2) |
+| NokorAccess | [`0xd828882ae9e821d5908674100310BA83FF4E5F66`](https://sepolia.basescan.org/address/0xd828882ae9e821d5908674100310BA83FF4E5F66) |
+| NokorPoint | [`0xCB6D0e77618027348A9a3781DD0e91896B92eAC0`](https://sepolia.basescan.org/address/0xCB6D0e77618027348A9a3781DD0e91896B92eAC0) |
+
+### Staff keys for testing
+
+These keys are for the shared testnet deployment only. They have no value and are intentionally public so contributors can test every role without running their own deployment.
+
+| Role | Key | Login page |
+| --- | --- | --- |
+| Immigration (issuer) | `npk_6bd55e5ea0950abfabf551d199f5bf2bb6f2f26945d93f98` | `#/immigration` |
+| Site gate | `npk_28f1c23e5fa85a4ba343748fae50f2d8fa5526d4c06b4f76` | `#/gate` |
+| Tour operator | `npk_65f8ec1cd5eb751bee91bf510172be70f4cd56791e11f7db` | `#/operator` |
+
+Visitor and merchant wallets do not need a key — create one at `#/wallet`.
+
 ## Licence
 
 The COTA source is licensed under the [Apache License 2.0](LICENSE). The vendored zk-vault signer in `app/src/wallet/` remains under its MIT licence (`app/src/wallet/LICENSE-zk-vault-react`). OpenZeppelin Contracts and forge-std keep their own licences.
