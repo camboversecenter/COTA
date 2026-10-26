@@ -35,6 +35,8 @@ const ICONS = {
   copy: "M9 9h11v11H9zM5 15H4V4h11v1",
   wallet: "M3 7a2 2 0 0 1 2-2h13v4M3 7v11a2 2 0 0 0 2 2h16V9H5a2 2 0 0 1-2-2zM17 14.5h.01",
   refresh: "M20 11a8 8 0 0 0-14.5-3.5L4 9M4 4v5h5M4 13a8 8 0 0 0 14.5 3.5L20 15M20 20v-5h-5",
+  sun: "M12 17a5 5 0 1 0 0-10 5 5 0 0 0 0 10zM12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4",
+  moon: "M20 14.5A8.5 8.5 0 0 1 9.5 4a8.5 8.5 0 1 0 10.5 10.5z",
 } as const;
 
 export type IconName = keyof typeof ICONS;
@@ -85,11 +87,62 @@ export function Brand() {
   );
 }
 
+export type Theme = "light" | "dark";
+
+const THEME_KEY = "nokor.theme";
+const THEME_COLOR: Record<Theme, string> = { light: "#f1f4f1", dark: "#0a0e0d" };
+
+/** Light unless the holder has chosen dark; the choice survives a reload. */
+export function readTheme(): Theme {
+  try {
+    return localStorage.getItem(THEME_KEY) === "dark" ? "dark" : "light";
+  } catch {
+    return "light";
+  }
+}
+
+export function applyTheme(theme: Theme) {
+  document.documentElement.dataset.theme = theme;
+  document.querySelector('meta[name="theme-color"]')?.setAttribute("content", THEME_COLOR[theme]);
+}
+
+export function useTheme() {
+  const [theme, setTheme] = useState<Theme>(readTheme);
+  useEffect(() => {
+    applyTheme(theme);
+    try {
+      localStorage.setItem(THEME_KEY, theme);
+    } catch {
+      /* private mode: the theme still applies for this session */
+    }
+  }, [theme]);
+  const toggle = useCallback(() => setTheme((t) => (t === "dark" ? "light" : "dark")), []);
+  return { theme, toggle };
+}
+
+export function ThemeToggle() {
+  const { theme, toggle } = useTheme();
+  const next = theme === "dark" ? "light" : "dark";
+  return (
+    <button
+      className="icon-btn"
+      onClick={toggle}
+      aria-label={`Switch to ${next} theme`}
+      title={`Switch to ${next} theme`}
+    >
+      <Icon name={theme === "dark" ? "sun" : "moon"} size={18} />
+    </button>
+  );
+}
+
 export function TopBar({ right }: { right?: ReactNode }) {
   return (
     <header className="topbar">
       <Brand />
-      {right}
+      <div className="topbar-right">
+        {right}
+        <ThemeToggle />
+      </div>
     </header>
   );
 }

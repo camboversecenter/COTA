@@ -11,3 +11,11 @@ createRoot(document.getElementById("root")!).render(
     </WalletProvider>
   </StrictMode>,
 );
+
+// Installable and offline-capable once built; skipped in dev, where the module
+// graph is served unbundled and a cached shell would hide edits.
+if (import.meta.env.PROD && "serviceWorker" in navigator) {
+  addEventListener("load", () => {
+    navigator.serviceWorker.register("/sw.js").catch(() => {});
+  });
+}
