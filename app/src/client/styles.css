@@ -44,34 +44,34 @@
   color-scheme: light;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --bg: #0a0e0d;
-    --surface: #171c1a;
-    --surface-2: #1f2522;
-    --fill: rgba(150, 165, 158, 0.16);
-    --fill-2: rgba(150, 165, 158, 0.26);
-    --sep: rgba(255, 255, 255, 0.1);
-    --bar: rgba(18, 23, 21, 0.76);
-    --ink: #eef3f0;
-    --ink-2: #a2aea8;
-    --ink-3: #6d7873;
-    --tint: #5ccaa3;
-    --tint-fill: #1f8466;
-    --tint-soft: rgba(92, 202, 163, 0.15);
-    --ok: #5bd58f;
-    --ok-soft: rgba(91, 213, 143, 0.14);
-    --warn: #ffbd52;
-    --warn-soft: rgba(255, 189, 82, 0.14);
-    --danger: #ff7166;
-    --danger-soft: rgba(255, 113, 102, 0.14);
-    --info: #7ab4ff;
-    --info-soft: rgba(122, 180, 255, 0.14);
-    --violet: #c3a6ff;
-    --violet-soft: rgba(195, 166, 255, 0.14);
-    --shadow: none;
-    color-scheme: dark;
-  }
+/* Light is the default. Dark is opt-in through the top bar's toggle, which sets
+   data-theme on <html> and remembers the choice. */
+:root[data-theme="dark"] {
+  --bg: #0a0e0d;
+  --surface: #171c1a;
+  --surface-2: #1f2522;
+  --fill: rgba(150, 165, 158, 0.16);
+  --fill-2: rgba(150, 165, 158, 0.26);
+  --sep: rgba(255, 255, 255, 0.1);
+  --bar: rgba(18, 23, 21, 0.76);
+  --ink: #eef3f0;
+  --ink-2: #a2aea8;
+  --ink-3: #6d7873;
+  --tint: #5ccaa3;
+  --tint-fill: #1f8466;
+  --tint-soft: rgba(92, 202, 163, 0.15);
+  --ok: #5bd58f;
+  --ok-soft: rgba(91, 213, 143, 0.14);
+  --warn: #ffbd52;
+  --warn-soft: rgba(255, 189, 82, 0.14);
+  --danger: #ff7166;
+  --danger-soft: rgba(255, 113, 102, 0.14);
+  --info: #7ab4ff;
+  --info-soft: rgba(122, 180, 255, 0.14);
+  --violet: #c3a6ff;
+  --violet-soft: rgba(195, 166, 255, 0.14);
+  --shadow: none;
+  color-scheme: dark;
 }
 
 * { box-sizing: border-box; }
@@ -124,6 +124,7 @@ a { color: var(--tint); }
 }
 .brand { display: flex; align-items: center; gap: 9px; font-weight: 650; font-size: 1.0625rem; color: var(--ink); text-decoration: none; }
 .brand svg { width: 28px; height: 28px; border-radius: 7px; }
+.topbar-right { display: flex; align-items: center; gap: 8px; }
 
 /* Floating tab bar: a translucent capsule above the home indicator. */
 .tabs {

@@ -1,10 +1,26 @@
 {
+  "id": "/",
   "name": "Nokor Pass",
   "short_name": "Nokor Pass",
   "description": "One pass to pay, enter heritage sites and carry Nokor Points across Cambodia.",
   "start_url": "/#/wallet",
+  "scope": "/",
   "display": "standalone",
-  "background_color": "#edf0ea",
+  "display_override": ["standalone", "minimal-ui"],
+  "orientation": "portrait",
+  "lang": "en",
+  "dir": "ltr",
+  "categories": ["travel", "finance"],
+  "background_color": "#f1f4f1",
   "theme_color": "#0e4a3f",
-  "icons": [{ "src": "/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }]
+  "icons": [
+    { "src": "/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" },
+    { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ],
+  "shortcuts": [
+    { "name": "Wallet", "url": "/#/wallet" },
+    { "name": "Public indicators", "url": "/#/dashboard" }
+  ]
 }
